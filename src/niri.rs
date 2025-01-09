@@ -2316,7 +2316,7 @@ impl Niri {
             lock_color_buffer: SolidColorBuffer::new(size, CLEAR_COLOR_LOCKED),
             screen_transition: None,
             debug_damage_tracker: OutputDamageTracker::from_output(&output),
-            bar_buffer: SolidColorBuffer::new(Size::from((1, size.h)), Color32F.BLACK),
+            bar_buffer: SolidColorBuffer::new(Size::from((1, size.h)), Color32F::BLACK),
         };
         let rv = self.output_state.insert(output.clone(), state);
         assert!(rv.is_none(), "output was already tracked");
@@ -3260,6 +3260,7 @@ impl Niri {
 
         let output_scale = Scale::from(output.current_scale().fractional_scale());
 
+        let state = self.output_state.get(output).unwrap();
         let bar = SolidColorRenderElement::from_buffer(
             &state.bar_buffer,
             (0, 0),
