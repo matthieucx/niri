@@ -3268,10 +3268,10 @@ impl Niri {
             Kind::Unspecified,
         )
         .into();
-        elements.push(bar);
 
-        // The pointer goes on the top.
+        // The bar goes on the top, with the pointer just after.
         let mut elements = vec![];
+        elements.push(bar);
         if include_pointer {
             elements = self.pointer_element(renderer, output);
         }
