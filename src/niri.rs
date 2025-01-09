@@ -2414,7 +2414,7 @@ impl Niri {
 
         if let Some(state) = self.output_state.get_mut(output) {
             state.background_buffer.resize(output_size);
-            state.bar_buffer.resize(Size::from((1, output_size.h)))
+            state.bar_buffer.resize(Size::from((1, output_size.h)));
 
             state.lock_color_buffer.resize(output_size);
             if is_locked {
@@ -3271,10 +3271,10 @@ impl Niri {
 
         // The bar goes on the top, with the pointer just after.
         let mut elements = vec![];
-        elements.push(bar);
         if include_pointer {
             elements = self.pointer_element(renderer, output);
         }
+        elements.insert(0, bar);
 
         // Next, the screen transition texture.
         {
