@@ -398,6 +398,8 @@ pub struct OutputState {
     screen_transition: Option<ScreenTransition>,
     /// Damage tracker used for the debug damage visualization.
     pub debug_damage_tracker: OutputDamageTracker,
+    /// Solid color buffer to always display a column of black pixels on the left of the screen
+    pub bar_buffer: SolidColorBuffer,
 }
 
 #[derive(Debug, Default)]
@@ -2312,6 +2314,7 @@ impl Niri {
             lock_color_buffer: SolidColorBuffer::new(size, CLEAR_COLOR_LOCKED),
             screen_transition: None,
             debug_damage_tracker: OutputDamageTracker::from_output(&output),
+            bar_buffer: SolidColorBuffer::new(Size::from((1, size.h)), Color32F::BLACK),
         };
         let rv = self.output_state.insert(output.clone(), state);
         assert!(rv.is_none(), "output was already tracked");
@@ -2409,6 +2412,7 @@ impl Niri {
 
         if let Some(state) = self.output_state.get_mut(output) {
             state.background_buffer.resize(output_size);
+            state.bar_buffer.resize(Size::from((1, output_size.h)));
 
             state.lock_color_buffer.resize(output_size);
             if is_locked {
@@ -3254,11 +3258,21 @@ impl Niri {
 
         let output_scale = Scale::from(output.current_scale().fractional_scale());
 
-        // The pointer goes on the top.
+        let state = self.output_state.get(output).unwrap();
+        let bar = SolidColorRenderElement::from_buffer(
+            &state.bar_buffer,
+            (0, 0),
+            output_scale,
+            1.,
+            Kind::Unspecified,
+        )
+        .into();
+        // The bar goes on the top, with the pointer just after.
         let mut elements = vec![];
         if include_pointer {
             elements = self.pointer_element(renderer, output);
         }
+        elements.insert(0, bar);
 
         // Next, the screen transition texture.
         {
