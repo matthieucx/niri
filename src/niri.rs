@@ -1262,7 +1262,7 @@ impl State {
         }
 
         if shaders_changed {
-            self.niri.layout.update_shaders();
+            self.niri.update_shaders();
         }
 
         if cursor_inactivity_timeout_changed {
@@ -3265,6 +3265,14 @@ impl Niri {
                     mapped.update_render_elements(geo.size.to_f64(), scale);
                 }
             }
+        }
+    }
+
+    pub fn update_shaders(&mut self) {
+        self.layout.update_shaders();
+
+        for mapped in self.mapped_layer_surfaces.values_mut() {
+            mapped.update_shaders();
         }
     }
 
