@@ -1,6 +1,7 @@
 use std::cell::{Cell, OnceCell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::ffi::OsString;
+use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -1934,18 +1935,11 @@ impl Niri {
         let socket_name = socket_source.socket_name().to_os_string();
         event_loop
             .insert_source(socket_source, move |client, _, state| {
-                let config = state.niri.config.borrow();
-                let data = Arc::new(ClientState {
-                    compositor_state: Default::default(),
-                    can_view_decoration_globals: config.prefer_no_csd,
-                    primary_selection_disabled: config.clipboard.disable_primary,
+                state.niri.insert_client(NewClient {
+                    client,
                     restricted: false,
                     credentials_unknown: false,
                 });
-
-                if let Err(err) = state.niri.display_handle.insert_client(client, data) {
-                    warn!("error inserting client: {err}");
-                }
             })
             .unwrap();
 
@@ -2125,6 +2119,27 @@ impl Niri {
         niri.reset_pointer_inactivity_timer();
 
         niri
+    }
+
+    pub fn insert_client(&mut self, client: NewClient) {
+        let NewClient {
+            client,
+            restricted,
+            credentials_unknown,
+        } = client;
+
+        let config = self.config.borrow();
+        let data = Arc::new(ClientState {
+            compositor_state: Default::default(),
+            can_view_decoration_globals: config.prefer_no_csd,
+            primary_selection_disabled: config.clipboard.disable_primary,
+            restricted,
+            credentials_unknown,
+        });
+
+        if let Err(err) = self.display_handle.insert_client(client, data) {
+            warn!("error inserting client: {err}");
+        }
     }
 
     #[cfg(feature = "dbus")]
@@ -5183,6 +5198,12 @@ impl Niri {
             .unwrap();
         self.pointer_inactivity_timer = Some(token);
     }
+}
+
+pub struct NewClient {
+    pub client: UnixStream,
+    pub restricted: bool,
+    pub credentials_unknown: bool,
 }
 
 pub struct ClientState {
