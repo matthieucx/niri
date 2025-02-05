@@ -3909,7 +3909,7 @@ impl Niri {
         }
     }
 
-    pub fn send_frame_callbacks(&self, output: &Output) {
+    pub fn send_frame_callbacks(&mut self, output: &Output) {
         let _span = tracy_client::span!("Niri::send_frame_callbacks");
 
         let state = self.output_state.get(output).unwrap();
@@ -3950,8 +3950,8 @@ impl Niri {
 
         let frame_callback_time = get_monotonic_time();
 
-        for mapped in self.layout.windows_for_output(output) {
-            mapped.window.send_frame(
+        for mapped in self.layout.windows_for_output_mut(output) {
+            mapped.send_frame(
                 output,
                 frame_callback_time,
                 FRAME_CALLBACK_THROTTLE,
@@ -3999,7 +3999,7 @@ impl Niri {
         }
     }
 
-    pub fn send_frame_callbacks_on_fallback_timer(&self) {
+    pub fn send_frame_callbacks_on_fallback_timer(&mut self) {
         let _span = tracy_client::span!("Niri::send_frame_callbacks_on_fallback_timer");
 
         // Make up a bogus output; we don't care about it here anyway, just the throttling timer.
@@ -4016,8 +4016,8 @@ impl Niri {
 
         let frame_callback_time = get_monotonic_time();
 
-        self.layout.with_windows(|mapped, _, _| {
-            mapped.window.send_frame(
+        self.layout.with_windows_mut(|mapped, _| {
+            mapped.send_frame(
                 output,
                 frame_callback_time,
                 FRAME_CALLBACK_THROTTLE,
