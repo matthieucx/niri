@@ -5017,7 +5017,7 @@ impl Niri {
 
         let mut casts = mem::take(&mut self.casts);
         for cast in &mut casts {
-            if !cast.is_active.get() {
+            if !cast.is_active() {
                 continue;
             }
 
@@ -5073,7 +5073,7 @@ impl Niri {
 
         let mut casts = mem::take(&mut self.casts);
         for cast in &mut casts {
-            if !cast.is_active.get() {
+            if !cast.is_active() {
                 continue;
             }
 
