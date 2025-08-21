@@ -110,6 +110,8 @@ use smithay::wayland::virtual_keyboard::VirtualKeyboardManagerState;
 use smithay::wayland::xdg_activation::XdgActivationState;
 use smithay::wayland::xdg_foreign::XdgForeignState;
 
+#[cfg(feature = "dbus")]
+use crate::a11y::A11y;
 use crate::animation::Clock;
 use crate::backend::tty::SurfaceDmabufFeedback;
 use crate::backend::{Backend, Headless, RenderResult, Tty, Winit};
@@ -389,6 +391,8 @@ pub struct Niri {
     pub dbus: Option<crate::dbus::DBusServers>,
     #[cfg(feature = "dbus")]
     pub a11y_keyboard_monitor: Option<crate::dbus::freedesktop_a11y::KeyboardMonitor>,
+    #[cfg(feature = "dbus")]
+    pub a11y: A11y,
     #[cfg(feature = "dbus")]
     pub inhibit_power_key_fd: Option<zbus::zvariant::OwnedFd>,
 
@@ -762,6 +766,10 @@ impl State {
         self.refresh_ipc_outputs();
         self.ipc_refresh_layout();
         self.ipc_refresh_keyboard_layout_index();
+
+        // Needs to be called after updating the keyboard focus.
+        #[cfg(feature = "dbus")]
+        self.niri.refresh_a11y();
     }
 
     fn notify_blocker_cleared(&mut self) {
@@ -1328,6 +1336,10 @@ impl State {
             Err(()) => {
                 self.niri.config_error_notification.show();
                 self.niri.queue_redraw_all();
+
+                #[cfg(feature = "dbus")]
+                self.niri.a11y_announce_config_error();
+
                 return;
             }
         };
@@ -2464,6 +2476,9 @@ impl Niri {
 
         let exit_confirm_dialog = ExitConfirmDialog::new(animation_clock.clone(), config.clone());
 
+        #[cfg(feature = "dbus")]
+        let a11y = A11y::new(event_loop.clone());
+
         event_loop
             .insert_source(
                 Timer::from_duration(Duration::from_secs(1)),
@@ -2662,6 +2677,8 @@ impl Niri {
             dbus: None,
             #[cfg(feature = "dbus")]
             a11y_keyboard_monitor: None,
+            #[cfg(feature = "dbus")]
+            a11y,
             #[cfg(feature = "dbus")]
             inhibit_power_key_fd: None,
 
