@@ -2462,7 +2462,7 @@ impl Niri {
             hotkey_overlay.show();
         }
 
-        let exit_confirm_dialog = ExitConfirmDialog::new();
+        let exit_confirm_dialog = ExitConfirmDialog::new(animation_clock.clone(), config.clone());
 
         event_loop
             .insert_source(
@@ -4054,6 +4054,7 @@ impl Niri {
 
         self.layout.advance_animations();
         self.config_error_notification.advance_animations();
+        self.exit_confirm_dialog.advance_animations();
         self.screenshot_ui.advance_animations();
 
         for state in self.output_state.values_mut() {
@@ -4415,6 +4416,7 @@ impl Niri {
             state.unfinished_animations_remain = self.layout.are_animations_ongoing(Some(output));
             state.unfinished_animations_remain |=
                 self.config_error_notification.are_animations_ongoing();
+            state.unfinished_animations_remain |= self.exit_confirm_dialog.are_animations_ongoing();
             state.unfinished_animations_remain |= self.screenshot_ui.are_animations_ongoing();
             state.unfinished_animations_remain |= state.screen_transition.is_some();
 
