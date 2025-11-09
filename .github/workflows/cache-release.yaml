@@ -1,6 +1,7 @@
 name: Release (Nix build)
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
